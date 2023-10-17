@@ -4,26 +4,39 @@ namespace WinFormsApp1
 {
     public partial class Form1 : Form
     {
+        UpdateManager manager;
+
         public Form1()
         {
             InitializeComponent();
+
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private async void OnInitialization()
         {
-            UpdateMyApp();
+            manager = await UpdateManager.GitHubUpdateManager(@"https://github.com/Piotrassin/SquirrelTest");
+            versionTextBox.Text = manager.CurrentlyInstalledVersion().ToString();
         }
 
-        private static async Task UpdateMyApp()
+        private async void button1_Click(object sender, EventArgs e)
         {
-            using var mgr = new UpdateManager("https://the.place/you-host/updates");
-            var newVersion = await mgr.UpdateApp();
+            var updateInfo = await manager.CheckForUpdate();
 
-            // optionally restart the app automatically, or ask the user if/when they want to restart
-            if (newVersion != null)
+            if (updateInfo.ReleasesToApply.Count > 0)
             {
-                UpdateManager.RestartApp();
+                UpdateButton.Enabled = true;
             }
+            else
+            {
+                UpdateButton.Enabled = false;
+            }
+        }
+
+        private async void UpdateButton_Click(object sender, EventArgs e)
+        {
+            await manager.UpdateApp();
+
+            MessageBox.Show("Zaktualizowano. Zrestartuj by zastosowaæ zmiany.");
         }
     }
 }
